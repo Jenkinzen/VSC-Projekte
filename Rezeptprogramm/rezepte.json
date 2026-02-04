@@ -1,0 +1,114 @@
+[
+  {
+    "name": "Gebratene Enokis",
+    "gang": "Vorspeise",
+    "zubereitung": "Unteres Stück der Enoki abschneiden und in die Pfanne geben.",
+    "notizen": "",
+    "zutaten": [
+      {
+        "name": "Enokis",
+        "menge": "200",
+        "einheit": "g"
+      },
+      {
+        "name": "Salz",
+        "menge": "2",
+        "einheit": "Prisen"
+      },
+      {
+        "name": "Bratöl",
+        "menge": "1",
+        "einheit": "Klecks"
+      }
+    ]
+  },
+  {
+    "name": "Kokoscurry mit Pilzen",
+    "gang": "Hauptspeise",
+    "zubereitung": "Alles in den Wok un gib ihm.",
+    "notizen": "",
+    "zutaten": [
+      {
+        "name": "Kokosmilch",
+        "menge": "200",
+        "einheit": "ml"
+      },
+      {
+        "name": "Currypaste",
+        "menge": "1",
+        "einheit": "Klecks"
+      },
+      {
+        "name": "Pilze",
+        "menge": "200",
+        "einheit": "g"
+      },
+      {
+        "name": "Udon Nudeln",
+        "menge": "2",
+        "einheit": "Packungen"
+      }
+    ]
+  },
+  {
+    "name": "Sushibowl",
+    "gang": "Hauptspeise",
+    "zubereitung": "Reis kochen, Zutaten klein schneiden, alles in einer Schüssel mischen.",
+    "notizen": "",
+    "zutaten": [
+      {
+        "name": "Reis",
+        "menge": "2",
+        "einheit": "Tassen"
+      },
+      {
+        "name": "Noriblätter 0",
+        "menge": "nach",
+        "einheit": "Bedarf"
+      },
+      {
+        "name": "Schmand",
+        "menge": "200",
+        "einheit": "g"
+      },
+      {
+        "name": "Stremellachs1 Packung(circa",
+        "menge": "150",
+        "einheit": "g)"
+      },
+      {
+        "name": "Gurke",
+        "menge": "1",
+        "einheit": "Stück"
+      },
+      {
+        "name": "Lauchzwiebeln",
+        "menge": "1",
+        "einheit": "Strauch"
+      }
+    ]
+  },
+  {
+    "name": "Tofu Schokomousse",
+    "gang": "Dessert",
+    "zubereitung": "Tofu und Schokolade  pürieren, mit  und Agavendicksaft vermischen und  kalt stellen.",
+    "notizen": "",
+    "zutaten": [
+      {
+        "name": "Tofu",
+        "menge": "400",
+        "einheit": "g"
+      },
+      {
+        "name": "Zartbitterschokolade",
+        "menge": "2",
+        "einheit": "Stück"
+      },
+      {
+        "name": "Agavendicksaft 0",
+        "menge": "nach",
+        "einheit": "Bedarf"
+      }
+    ]
+  }
+]
