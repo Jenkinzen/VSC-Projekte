@@ -1,8 +1,17 @@
 #UI starten
-r"     .\.venv\Scripts\python rezeptliste_ui.py     "
+r"     .\.venv\Scripts\python rezeptliste_ui.py     "       "KLAPPT MOMENTAN MAGISCHERWEISE WIEDER OHNE TERMINALCOMMAND"
 
-#pytest starten
-r"     .\.venv\Scripts\python -m pytest -q          " r"(das r ist nur damit die -> \ <- nicht gelb unterstrichen werden)"
+#pytest starten 
+r"     .\.venv\Scripts\python -m pytest -q          "      r"(das r ist nur damit die -> \ <- nicht gelb unterstrichen werden)"
+
+#NEUER WEG
+#cd ".\Rezeptprogramm" python -m pytest -q
+
+#SO STARTEN WENN ICH SONST IM VSC PROJEKTE ORDNER BLEIBEN MÖCHTE
+#python -m pytest -q .\Rezeptprogramm
+
+#OKAY WENN ICH ÜBER FILE > OPEN FOLDER > REZEPTPROGRAMM DAS PROJEKT ÖFFNE GEHT AUCH EINFACH
+#python -m pytest -q
 
 ########Redo/Undo
 
