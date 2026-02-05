@@ -19,7 +19,6 @@ r"     .\.venv\Scripts\python -m pytest -q          "      r"(das r ist nur dami
 Undo : Ctrl + Z 
 Redo : Ctrl + Y
 """
-r"C:\Users\ggord\OneDrive\Desktop\VSC Projekte\.venv\Scripts\python rezeptliste_ui.py"
 
 ########Zeilen/Wörter
 """
@@ -75,9 +74,14 @@ Shift + Alt + rechts
 
 Auswahl verkleinern:
 Shift + Alt + links
+"""
 
+######### sonstiges
+"""
+Konsole öffnen:
+Strg + Ö
 
-
-Strg + Shift + P = Einstellungen in der oberen Mittelkonsole aufrufen
+Einstellungen in der oberen Mittelkonsole aufrufen:
+Strg + Shift + P
 
 """
