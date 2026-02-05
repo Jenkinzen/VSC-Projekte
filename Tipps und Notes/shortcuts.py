@@ -1,15 +1,16 @@
 #UI starten
-"     .\.venv\Scripts\python rezeptliste_ui.py     "
+r"     .\.venv\Scripts\python rezeptliste_ui.py     "
 
 #pytest starten
-"     .\.venv\Scripts\python -m pytest -q          "
+r"     .\.venv\Scripts\python -m pytest -q          " r"(das r ist nur damit die -> \ <- nicht gelb unterstrichen werden)"
 
 ########Redo/Undo
+
 """
 Undo : Ctrl + Z 
 Redo : Ctrl + Y
 """
-
+r"C:\Users\ggord\OneDrive\Desktop\VSC Projekte\.venv\Scripts\python rezeptliste_ui.py"
 
 ########Zeilen/Wörter
 """
