@@ -65,7 +65,7 @@ def test_filter_rezepte_nach_zutaten_all_must_match():
     assert [r.name for r in result] == ["Pasta"]
 
 
-###########################EIGENE TESTS#############################################################################################################################
+########################### EIGENE TESTS #############################################################################################################################
 
 def test_gang_pruefen():
      
@@ -83,7 +83,7 @@ def test_gang_pruefen():
     assert test5 is False   #Falsch weil .strip() nur die leerzeichen vor dem ersten und nach dem letzten Buchstaben weg macht. also is dann quasi immernoch "d e s s e r t"
     assert test6 is False   #merkste selber,wa?
 
-    """optimiert Version"""
+    """optimiert Version von GPT"""
 
 def test_gang_pruefen_optimiert():
 
@@ -113,6 +113,8 @@ def test_filter_rezepte_nach_gericht():
     assert any(r.name for r in result2) 
     assert any(r.name for r in result3)
 
+    assert any(r.name for r in service.filter_rezepte_nach_gericht("Curr"))
+
     #falsch
 
     result4 = service.filter_rezepte_nach_gericht("myv2")  
@@ -122,3 +124,73 @@ def test_filter_rezepte_nach_gericht():
     assert not any(r.name for r in result5) 
     assert not any(r.name for r in result6)
     assert not any(r.name for r in result4) 
+
+    """Selbst optimierte Version nach rumprobieren"""
+
+def test_filter_rezepte_nach_gericht_optimal():
+
+    storage.Gerichte.append(model.Rezept("Kokoscurry-Sushibowl-Schokomousse",[],"x","x","x"))
+
+    #wahr
+    assert any(r.name for r in service.filter_rezepte_nach_gericht("Curr"))
+    assert any(r.name for r in service.filter_rezepte_nach_gericht("sUsH"))
+    assert any(r.name for r in service.filter_rezepte_nach_gericht(" schok"))
+
+    #falsch
+    assert not any(r.name for r in service.filter_rezepte_nach_gericht("g932d"))
+    assert not any(r.name for r in service.filter_rezepte_nach_gericht("schnokomabe"))
+    assert not any(r.name for r in service.filter_rezepte_nach_gericht("miep-2xx.r9"))
+
+    storage.Gerichte.clear()
+
+"""Optimierung von GPT"""
+
+def test_filter_rezepte_nach_gericht_noch_krasser_optimiert():
+
+    storage.Gerichte.clear()
+    storage.Gerichte.append(model.Rezept("Kokoscurry-Sushibowl-Schokomousse", [], "x", "x", "x"))
+
+    def names(q):
+        return [r.name for r in service.filter_rezepte_nach_gericht(q)]
+
+    # wahr (Teilstrings + case + whitespace)
+    assert "Kokoscurry-Sushibowl-Schokomousse" in names("Curr")
+    assert "Kokoscurry-Sushibowl-Schokomousse" in names("sUsH ")
+    assert "Kokoscurry-Sushibowl-Schokomousse" in names(" schok")
+
+    # falsch
+    assert names("g932d") == []
+    assert names("schnokomabe") == []
+    assert names("miep-2xx.r9") == []
+"""xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"""
+
+def test_alle_rezepte():
+
+    storage.Gerichte.append(model.Rezept("1",[],"x","x","x"))
+    storage.Gerichte.append(model.Rezept("2",[],"x","x","x"))
+    storage.Gerichte.append(model.Rezept("3",[],"x","x","x"))
+    storage.Gerichte.append(model.Rezept("4",[],"x","x","x"))
+    storage.Gerichte.append(model.Rezept("5",[],"x","x","x"))
+    storage.Gerichte.append(model.Rezept("6",[],"x","x","x"))
+
+    def names():
+        return len([r.name for r in storage.Gerichte])
+    
+    assert names() == 6
+
+# wichtig!! nur mit names klappt es nicht, die () is wichtig und heißt "führe diese funktion jetzt aus"
+
+"""Optimale Form von Chat GPT """
+
+def test_alle_rezepte_optimal():
+
+    storage.Gerichte.append(model.Rezept("1",[],"x","x","x"))
+    storage.Gerichte.append(model.Rezept("2",[],"x","x","x"))
+    storage.Gerichte.append(model.Rezept("3",[],"x","x","x"))
+    storage.Gerichte.append(model.Rezept("4",[],"x","x","x"))
+    storage.Gerichte.append(model.Rezept("5",[],"x","x","x"))
+    storage.Gerichte.append(model.Rezept("6",[],"x","x","x"))
+
+    assert len(storage.Gerichte) == 6
+
+    
