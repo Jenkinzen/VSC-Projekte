@@ -1,6 +1,11 @@
 import rezeptliste_model as model
 import rezeptliste_storage as storage
-######## BASISZUGRIFF - LESEN
+
+
+
+
+
+######## BASISZUGRIFF - LESEN #################################################################################################################################
 
  
 def alle_rezepte():                                               
@@ -24,10 +29,10 @@ def rezept_finden(rezeptname):
     return None 
 
 
-######## VALIDIERUNG
+######## VALIDIERUNG ##############################################################################################################################################
 
 def gang_pruefen(gangeingabe):
-    return gangeingabe.lower() in storage.GUELTIGE_GAENGE
+    return gangeingabe.lower().strip() in storage.GUELTIGE_GAENGE
 
 def gang_validieren(gerichte, gangeingabe):
     """wenn irgendwas (any) in rezept.Gang das beinhaltet was der input war dann gibs raus
@@ -39,7 +44,7 @@ def gang_validieren(gerichte, gangeingabe):
         for rezept in gerichte
     )
 
-######## FILTER
+######## FILTER ####################################################################################################################################################
 
 def filter_rezepte_nach_gericht(gericht):
     """wollte eigentlich mit "any" arbeiten, aber teiltreffer ("Bro" eingabe zeigt "Brokkoli" an)
@@ -72,7 +77,7 @@ def filter_rezepte_nach_zutaten(zutaten):
     ]
 
 
-######## ÄNDERUNGEN
+######## ÄNDERUNGEN ################################################################################################################################################
 
 def rezepterstellung(rezeptname, zutaten_strings, zubereitung, gang, notizen):
     """In die Leere Zutatenliste kommen nachher die Objekte aus der Funktion.
