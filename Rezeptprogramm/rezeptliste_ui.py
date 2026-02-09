@@ -192,7 +192,6 @@ def rezept_einfuegen():
             print("Ungültige Auswahl! Bitte erneut eingeben.") 
 
     rezept = service.rezepterstellung(rezeptname, zutaten_strings, zubereitung,gangeingabe,notizen)
-    
     print(f"{rezept} wurde eingefügt!")
     return
 

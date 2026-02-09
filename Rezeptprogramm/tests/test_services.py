@@ -28,6 +28,12 @@ def test_rezept_nach_index_gueltig():
 
     result = service.rezept_nach_index([r1,r2],1)
 
+    assert result is r1
+    assert result is not None
+    assert result.name == "A"
+
+    storage.Gerichte.clear()
+
 def test_rezept_finden_case_insensitive():
     storage.Gerichte.append(model.Rezept("Spaghetti", [], "z", "Hauptspeise", ""))
 
@@ -103,6 +109,7 @@ def test_filter_rezepte_nach_gericht():
 
     storage.Gerichte.append(model.Rezept("Kokoscurry-Sushibowl-Schokomousse",[],"x","x","x"))
 
+
     #wahr
 
     result1 = service.filter_rezepte_nach_gericht("Curr") 
@@ -149,7 +156,8 @@ def test_filter_rezepte_nach_gericht_noch_krasser_optimiert():
 
     storage.Gerichte.clear()
     storage.Gerichte.append(model.Rezept("Kokoscurry-Sushibowl-Schokomousse", [], "x", "x", "x"))
-
+    storage.Gerichte.append(model.Rezept("Ekelpampe",[],"x","x","x"))
+                            
     def names(q):
         return [r.name for r in service.filter_rezepte_nach_gericht(q)]
 
@@ -193,4 +201,40 @@ def test_alle_rezepte_optimal():
 
     assert len(storage.Gerichte) == 6
 
-    
+    storage.Gerichte.clear()
+
+"""xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"""
+
+def test_rezept_loeschen():
+    storage.Gerichte.append(model.Rezept("Handfeuerwaffeln",[],"x","x","x"))
+
+    rezept = service.rezept_finden("Handfeuerwaffeln")
+    service.rezept_loeschen(rezept) 
+    assert len(storage.Gerichte) == 0
+
+    storage.Gerichte.clear()
+"""xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"""
+
+def test_rezept_einfuegen():
+
+    service.rezepterstellung("Handfeuerwaffeln",["Waffeln 4 Stück","Schießpulver 200 g","Schnittlauch Bündel"],"x","x","x")
+    assert len(storage.Gerichte) == 1
+
+    rezept = storage.Gerichte[0]
+
+    schnittlauch = next(z for z in rezept.zutaten if z.name == "Schnittlauch")
+    schießpulver = next(z for z in rezept.zutaten if z.name == "Schießpulver")
+    waffeln = next(z for z in rezept.zutaten if z.name == "Waffeln")
+
+    assert schnittlauch.menge is None
+    assert waffeln.einheit == "Stück"
+    assert schießpulver.menge == "200"
+
+    assert waffeln.menge != "5"
+    assert schießpulver.name != "piesschulver"
+    assert schnittlauch.menge != "Dingens"
+
+    storage.Gerichte.clear()
+
+"""xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"""
+
