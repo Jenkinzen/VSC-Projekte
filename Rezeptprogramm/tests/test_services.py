@@ -21,7 +21,8 @@ def isolate_storage(monkeypatch):
 
     # verhindere Dateizugriff                       // lambda: None -> lambda = erstelle eine funktion  , : None -> die nichts tut (quasi der Platzhalter für die speichere_rezepte Funktion)
     monkeypatch.setattr(storage, "speichere_rezepte", lambda: None)
-
+    monkeypatch.setattr(storage, "lade_rezepte", lambda: None)
+    
 def test_rezept_nach_index_gueltig():
     r1 = model.Rezept("A", [], "z", "Hauptspeise", "")
     r2 = model.Rezept("B",[],"z","Dessert","")
@@ -32,7 +33,7 @@ def test_rezept_nach_index_gueltig():
     assert result is not None
     assert result.name == "A"
 
-    storage.Gerichte.clear()
+    
 
 def test_rezept_finden_case_insensitive():
     storage.Gerichte.append(model.Rezept("Spaghetti", [], "z", "Hauptspeise", ""))
@@ -108,17 +109,40 @@ def test_gang_pruefen_optimiert():
 def test_filter_rezepte_nach_gericht():
 
     storage.Gerichte.append(model.Rezept("Kokoscurry-Sushibowl-Schokomousse",[],"x","x","x"))
-
+    storage.Gerichte.append(model.Rezept("Misosuppe",[],"x","x","x"))
 
     #wahr
 
     result1 = service.filter_rezepte_nach_gericht("Curr") 
     result2 = service.filter_rezepte_nach_gericht("sUsH ") 
     result3 = service.filter_rezepte_nach_gericht(" schok") 
+    result4 = service.filter_rezepte_nach_gericht("Miso")
+    result5 = service.filter_rezepte_nach_gericht("su")
 
     assert any(r.name for r in result1) 
-    assert any(r.name for r in result2) 
+    assert (r.name == "Kokoscurry-Sushibowl-Schokomousse" for r in result2) 
     assert any(r.name for r in result3)
+    assert (r.name == "Misosuppe" for r in result4)
+    assert {r.name  for r in result5} == {"Kokoscurry-Sushibowl-Schokomousse","Misosuppe"}
+
+    """Testet durch {} generell ob die beiden Namen, und NUR die beiden Namen im Set(so heißt das wenn man
+    ne Liste mit {} einklammert) sind. Die Reihenfolge ist egal.
+     Wenn diese beiden im Set enthalten sind, aber noch irgendetwas anderes dadrin wäre der test falsch."""
+    
+    assert [r.name  for r in result5] == ["Kokoscurry-Sushibowl-Schokomousse","Misosuppe"]
+
+    """Testet durch [] als Liste, der unterschied ist, hier muss die Reihenfolge stimmen( by default ist
+    die Reihenfolge > was als erstes eingefügt wurde kommt zuerst dran[also hier erst kokosbla dann Misosuppe])
+    deshalb """
+
+
+    """WICHTIG!!!! WENN MAN EIN SET {} TESTET MUSS AUCH DIE LC EIN SET{} SEIN.
+                   WENN MAN EINE LIST [] TESTET MUSS AUCH DIE LC EINE LIST [] SEIN. """
+    
+    """ ALTERNATIV KANN MAN EINE LISTE WIE UNTEN IN DER OPTIMIERTEN VERSION ZUM SET 
+                    UMWANDELN:
+                    assert set(names("e")) == {"Kokoscurry-Sushibowl-Schokomousse","Ekelpampe"}"""
+    
 
     assert any(r.name for r in service.filter_rezepte_nach_gericht("Curr"))
 
@@ -131,6 +155,7 @@ def test_filter_rezepte_nach_gericht():
     assert not any(r.name for r in result5) 
     assert not any(r.name for r in result6)
     assert not any(r.name for r in result4) 
+    assert not [r.name  for r in result5] == ["Misosuppe","Kokoscurry-Sushibowl-Schokomousse"]
 
     """Selbst optimierte Version nach rumprobieren"""
 
@@ -139,22 +164,24 @@ def test_filter_rezepte_nach_gericht_optimal():
     storage.Gerichte.append(model.Rezept("Kokoscurry-Sushibowl-Schokomousse",[],"x","x","x"))
 
     #wahr
+
     assert any(r.name for r in service.filter_rezepte_nach_gericht("Curr"))
     assert any(r.name for r in service.filter_rezepte_nach_gericht("sUsH"))
     assert any(r.name for r in service.filter_rezepte_nach_gericht(" schok"))
 
     #falsch
+
     assert not any(r.name for r in service.filter_rezepte_nach_gericht("g932d"))
     assert not any(r.name for r in service.filter_rezepte_nach_gericht("schnokomabe"))
     assert not any(r.name for r in service.filter_rezepte_nach_gericht("miep-2xx.r9"))
 
-    storage.Gerichte.clear()
+    
 
 """Optimierung von GPT"""
 
 def test_filter_rezepte_nach_gericht_noch_krasser_optimiert():
 
-    storage.Gerichte.clear()
+    
     storage.Gerichte.append(model.Rezept("Kokoscurry-Sushibowl-Schokomousse", [], "x", "x", "x"))
     storage.Gerichte.append(model.Rezept("Ekelpampe",[],"x","x","x"))
                             
@@ -165,6 +192,8 @@ def test_filter_rezepte_nach_gericht_noch_krasser_optimiert():
     assert "Kokoscurry-Sushibowl-Schokomousse" in names("Curr")
     assert "Kokoscurry-Sushibowl-Schokomousse" in names("sUsH ")
     assert "Kokoscurry-Sushibowl-Schokomousse" in names(" schok")
+
+    assert set(names("e")) == {"Kokoscurry-Sushibowl-Schokomousse","Ekelpampe"}
 
     # falsch
     assert names("g932d") == []
@@ -201,7 +230,7 @@ def test_alle_rezepte_optimal():
 
     assert len(storage.Gerichte) == 6
 
-    storage.Gerichte.clear()
+    
 
 """xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"""
 
@@ -212,7 +241,7 @@ def test_rezept_loeschen():
     service.rezept_loeschen(rezept) 
     assert len(storage.Gerichte) == 0
 
-    storage.Gerichte.clear()
+    
 """xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"""
 
 def test_rezept_einfuegen():
@@ -234,7 +263,7 @@ def test_rezept_einfuegen():
     assert schießpulver.name != "piesschulver"
     assert schnittlauch.menge != "Dingens"
 
-    storage.Gerichte.clear()
+    
 
 """xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"""
 
