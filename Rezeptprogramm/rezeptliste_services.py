@@ -62,7 +62,7 @@ def filter_rezepte_nach_gang(gangeingabe):
    eine weitere liste(wie unten die zutatenliste) aufrufen zu müssen."""
     return [
         rezept for rezept in storage.Gerichte
-        if rezept.gang.strip().lower() == gangeingabe.strip().lower()
+        if gangeingabe.strip().lower() == rezept.gang.strip().lower()
     ]
 
 def filter_rezepte_nach_zutaten(zutaten):
