@@ -1,11 +1,13 @@
+from dataclasses import dataclass
+from typing import List, Optional
 import textwrap
 
 
+@dataclass
 class Zutaten:
-    def __init__(self, name, menge=None, einheit=None):
-        self.name = name
-        self.menge = menge
-        self.einheit = einheit
+    name: str
+    menge: Optional[str] = None
+    einheit: Optional[str] = None
 
     def __str__(self):
         if self.menge is None:
@@ -13,13 +15,13 @@ class Zutaten:
         return f"{self.name} ({self.menge} {self.einheit})"
 
 
+@dataclass
 class Rezept:
-    def __init__(self, name, zutaten, zubereitung, gang, notizen=""):
-        self.name = name
-        self.zutaten = zutaten          # Liste von Zutat-Objekten
-        self.zubereitung = zubereitung
-        self.gang = gang 
-        self.notizen = notizen
+    name: str
+    zutaten: List[Zutaten]
+    zubereitung: str
+    gang: str
+    notizen: str = ""
 
     def _format_block(self, label, value, width=60):
         wrapper = textwrap.TextWrapper(

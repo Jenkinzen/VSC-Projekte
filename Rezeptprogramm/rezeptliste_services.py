@@ -1,6 +1,7 @@
 import rezeptliste_model as model
 import rezeptliste_storage as storage
-
+from typing import List, Optional
+from rezeptliste_repository import JsonRezeptRepository
 
 
 
@@ -8,10 +9,10 @@ import rezeptliste_storage as storage
 ######## BASISZUGRIFF - LESEN #################################################################################################################################
 
  
-def alle_rezepte():                                               
-    return storage.Gerichte
+def alle_rezepte(repo: JsonRezeptRepository) -> List[model.Rezept]:
+    return repo.alle()
 
-def rezept_nach_index(rezepte, index):
+def rezept_nach_index(rezepte: List[model.Rezept], index: int) -> Optional[model.Rezept]:
     """index = auswahl der Gerichtnummer im UI.
     wenn die auswahl größer gleich 1 ist und kleiner als die
     gesamtanzahl an rezepten (len(rezepte) nummeriert die einzelnen Objekte in der Liste durch
@@ -20,13 +21,9 @@ def rezept_nach_index(rezepte, index):
         return rezepte[index - 1]
     return None
 
-def rezept_finden(rezeptname):
+def rezept_finden(repo: JsonRezeptRepository, rezeptname: str) -> Optional[model.Rezept]:
 
-    for rezept in storage.Gerichte:
-        if rezept.name.strip().lower() == rezeptname.strip().lower():
-            return rezept
-
-    return None 
+    return repo.find_by_name(rezeptname)
 
 
 ######## VALIDIERUNG ##############################################################################################################################################
@@ -46,40 +43,37 @@ def gang_validieren(gerichte, gangeingabe):
 
 ######## FILTER ####################################################################################################################################################
 
-def filter_rezepte_nach_gericht(gericht):
+def filter_rezepte_nach_gericht(repo: JsonRezeptRepository, gericht: str) -> List[model.Rezept]:
     """wollte eigentlich mit "any" arbeiten, aber teiltreffer ("Bro" eingabe zeigt "Brokkoli" an)
     werden auch durch "in" ermöglicht. any macht kein sinn weil gerichte.Name keine Liste
      sondern ein String ist, bei Zutaten machte es Sinn weil Zutaten eine Liste ist.(any = irgendeins aus (der liste)/ in = irgendetwas in (string))
      """
     gericht = gericht.strip().lower()
-    return [
-        rezept for rezept in storage.Gerichte
-        if gericht.lower().strip() in rezept.name.strip().lower()
-    ] 
+    return [r for r in repo.alle() if gericht in r.name.strip().lower()]
 
-def filter_rezepte_nach_gang(gangeingabe):
+def filter_rezepte_nach_gang(repo: JsonRezeptRepository, gangeingabe: str) -> List[model.Rezept]:
     """Siehe filter_rezepte_nach_zutaten, selbe sache nur ohne aus einer liste(gerichte)
    eine weitere liste(wie unten die zutatenliste) aufrufen zu müssen."""
-    return [
-        rezept for rezept in storage.Gerichte
-        if gangeingabe.strip().lower() == rezept.gang.strip().lower()
-    ]
+    gang = gangeingabe.strip().lower()
+    return [r for r in repo.alle() if r.gang.strip().lower() == gang]
 
-def filter_rezepte_nach_zutaten(zutaten):
+def filter_rezepte_nach_zutaten(repo: JsonRezeptRepository, zutateneingabe: List[str]) -> List[model.Rezept]:
     """ rezept for rezept in storage.Gerichte > geh jedes rezept durch was gespeichert wurde.(s.Gerichte = rezeptsammlung / rezept for rezept = jedes Rezept einzeln durchgehen)
     any(zutat in einzelne_zutat = gibt es die gesuchten Zutaten im Rezept? ///// for einzelne_zutat in rezept.Zutaten) = guck jede Zutat des Rezepts an.
     all(any(bla)for zutat in zutaten) =  sind ALLE gesuchten Zutaten in diesem Rezept?""" 
-    return[
-        rezept for rezept in storage.Gerichte
-        if all(any (zutat in einzelne_zutat.name.lower() for einzelne_zutat in rezept.zutaten)
-               for zutat in zutaten
+    zutatenwahl = [z.strip().lower() for z in zutateneingabe if z.strip()]
+    return [
+        rezept
+        for rezept in repo.alle()
+        if all(
+            any(zutat in einzelne_zutat.name.strip().lower() for einzelne_zutat in rezept.zutaten)
+            for zutat in zutatenwahl
         )
     ]
 
-
 ######## ÄNDERUNGEN ################################################################################################################################################
 
-def rezepterstellung(rezeptname, zutaten_strings, zubereitung, gang, notizen):
+
     """In die Leere Zutatenliste kommen nachher die Objekte aus der Funktion.
         zs variable für Zutat als Text ( wie das 1. x in x for x in Gerichte )
         teile = zs.split() -> die Sachen werden durch leerzeichen gesplittet(also Name,menge,einheit)
@@ -104,7 +98,16 @@ def rezepterstellung(rezeptname, zutaten_strings, zubereitung, gang, notizen):
         einheit -> teile[-1] also ist das letzte teil
                 if len(teile) >= 2 -> insofern es genau oder mehr als 2 teile gibt.
     """
-    Zutatenliste = []
+    
+def rezepterstellung(
+    repo: JsonRezeptRepository,
+    rezeptname: str,
+    zutaten_strings: List[str],
+    zubereitung: str,
+    gang: str,
+    notizen: str,
+) -> model.Rezept:
+    zutatenliste: List[model.Zutaten] = []
     for zs in zutaten_strings:
         teile = zs.split()
         if not teile:
@@ -112,24 +115,25 @@ def rezepterstellung(rezeptname, zutaten_strings, zubereitung, gang, notizen):
         zutatenname = " ".join(teile[:-2]) if len(teile) > 2 else teile[0]
         menge = teile[-2] if len(teile) > 2 else None
         einheit = teile[-1] if len(teile) >= 2 else None
-        Zutatenliste.append(model.Zutaten(name=zutatenname, menge=menge, einheit=einheit))
+        zutatenliste.append(model.Zutaten(name=zutatenname, menge=menge, einheit=einheit))
 
     neues_rezept = model.Rezept(
         name=rezeptname,
-        zutaten=Zutatenliste,
+        zutaten=zutatenliste,
         zubereitung=zubereitung,
         notizen=notizen,
-        gang=gang.title()
+        gang=gang.title(),
     )
-    storage.Gerichte.append(neues_rezept)
-    storage.speichere_rezepte() 
+
+    repo.add(neues_rezept)
+    repo.save()
     return neues_rezept
 
-def rezept_laden():
+"""def rezept_laden():
     storage.lade_rezepte()
+    
+    Ist jetzt hinfällig da diese Funktion von repo übernommen wird."""
 
-def rezept_loeschen(rezeptwahl):
-    """speichere_rezepte speichert die überarbeitete Liste , quasi die Liste mit dem 
-    entfernten Gericht wird gespeichert"""
-    storage.Gerichte.remove(rezeptwahl)
-    storage.speichere_rezepte()
+def rezept_loeschen(repo: JsonRezeptRepository, rezept: model.Rezept) -> None:
+    repo.remove(rezept)
+    repo.save()

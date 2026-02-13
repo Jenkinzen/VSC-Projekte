@@ -1,7 +1,10 @@
-import pytest 
-import rezeptliste_storage as storage
+import pytest
 import rezeptliste_services as service
 import rezeptliste_model as model
+
+from rezeptliste_repository import JsonRezeptRepository
+
+
 """Damit pytest Sachen findet , Ordner immer mit test_[irgendwas].py oder [irgendwas]_test.py betiteln
 und auch test funktionen immer mit test_ beginnen damit pytest diese automatisch im ordner findet."""
 
@@ -13,19 +16,18 @@ und auch test funktionen immer mit test_ beginnen damit pytest diese automatisch
     /to assert - behaupten | -> ich behaupte dies und das wird dabei raus kommen, stimmt das?
     """
 
-# autouse = True > wird vor jedem test automatisch ausgeführt
-@pytest.fixture(autouse=True)
-def isolate_storage(monkeypatch):
-    # vor jedem Test: leere Liste
-    storage.Gerichte.clear()
-
-    # verhindere Dateizugriff                       // lambda: None -> lambda = erstelle eine funktion  , : None -> die nichts tut (quasi der Platzhalter für die speichere_rezepte Funktion)
-    monkeypatch.setattr(storage, "speichere_rezepte", lambda: None)
-    monkeypatch.setattr(storage, "lade_rezepte", lambda: None)
+@pytest.fixture
+def repo(tmp_path):
+    datei = tmp_path / "rezepte.json"
+    r = JsonRezeptRepository(datei)
+    r.load()  # startet leer, weil Datei noch nicht existiert
+    return r
     
-def test_rezept_nach_index_gueltig():
-    r1 = model.Rezept("A", [], "z", "Hauptspeise", "")
-    r2 = model.Rezept("B",[],"z","Dessert","")
+
+
+def test_rezept_nach_index_gueltig(repo):
+    r1 = repo.add(model.Rezept("A", [], "z", "Hauptspeise", ""))
+    r2 = repo.add(model.Rezept("B",[],"z","Dessert",""))
 
     result = service.rezept_nach_index([r1,r2],1)
 
@@ -33,42 +35,41 @@ def test_rezept_nach_index_gueltig():
     assert result is not None
     assert result.name == "A"
 
+
     
 
-def test_rezept_finden_case_insensitive():
-    storage.Gerichte.append(model.Rezept("Spaghetti", [], "z", "Hauptspeise", ""))
+def test_rezept_finden_case_insensitive(repo):
+    repo.add(model.Rezept("Spaghetti", [], "z", "Hauptspeise", ""))
 
-    result = service.rezept_finden(" spaghetti ")
+    result = service.rezept_finden(repo," spaghetti ")
     assert result is not None
     assert result.name == "Spaghetti"
 
-    assert service.rezept_finden("Pizza") is None
+    assert service.rezept_finden(repo,"Pizza") is None
 
-def test_filter_rezepte_nach_gang():
-    storage.Gerichte.append(model.Rezept("A", [], "z", "Dessert", ""))
-    storage.Gerichte.append(model.Rezept("B", [], "z", "Hauptspeise", ""))
+def test_filter_rezepte_nach_gang(repo):
+    repo.add(model.Rezept("A", [], "z", "Dessert", ""))
+    repo.add(model.Rezept("B", [], "z", "Hauptspeise", ""))
 
-    result = service.filter_rezepte_nach_gang("dessert")
+    result = service.filter_rezepte_nach_gang(repo,"dessert")
     assert [r.name for r in result] == ["A"]
 
-def test_filter_rezepte_nach_zutaten_all_must_match():
-    r1 = model.Rezept(
+def test_filter_rezepte_nach_zutaten_all_must_match(repo):
+    r1 = repo.add(model.Rezept(
         "Pasta",
         [model.Zutaten("tomate", None, "stück"), model.Zutaten("salz", None, "prise")],
             "z",
             "Hauptspeise",
         ""
-    )
-    r2 = model.Rezept(
+    ))
+    r2 = repo.add(model.Rezept(
         "Brot",
         [model.Zutaten("mehl", "500", "g"), model.Zutaten("salz", None, "prise")],
         "z",
         "Hauptspeise",
         ""
-    )
-    storage.Gerichte.extend([r1, r2])
-
-    result = service.filter_rezepte_nach_zutaten(["salz", "tomate"])
+    ))
+    result = service.filter_rezepte_nach_zutaten(repo,["salz", "tomate"])
     assert [r.name for r in result] == ["Pasta"]
 
 
@@ -106,18 +107,18 @@ def test_gang_pruefen_optimiert():
 
 """xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"""
 
-def test_filter_rezepte_nach_gericht():
+def test_filter_rezepte_nach_gericht(repo):
 
-    storage.Gerichte.append(model.Rezept("Kokoscurry-Sushibowl-Schokomousse",[],"x","x","x"))
-    storage.Gerichte.append(model.Rezept("Misosuppe",[],"x","x","x"))
+    repo.add(model.Rezept("Kokoscurry-Sushibowl-Schokomousse",[],"x","x","x"))
+    repo.add(model.Rezept("Misosuppe",[],"x","x","x"))
 
     #wahr
 
-    result1 = service.filter_rezepte_nach_gericht("Curr") 
-    result2 = service.filter_rezepte_nach_gericht("sUsH ") 
-    result3 = service.filter_rezepte_nach_gericht(" schok") 
-    result4 = service.filter_rezepte_nach_gericht("Miso")
-    result5 = service.filter_rezepte_nach_gericht("su")
+    result1 = service.filter_rezepte_nach_gericht(repo,"Curr") 
+    result2 = service.filter_rezepte_nach_gericht(repo,"sUsH ") 
+    result3 = service.filter_rezepte_nach_gericht(repo," schok") 
+    result4 = service.filter_rezepte_nach_gericht(repo,"Miso")
+    result5 = service.filter_rezepte_nach_gericht(repo,"su")
 
     assert any(r.name for r in result1) 
     assert (r.name == "Kokoscurry-Sushibowl-Schokomousse" for r in result2) 
@@ -144,13 +145,13 @@ def test_filter_rezepte_nach_gericht():
                     assert set(names("e")) == {"Kokoscurry-Sushibowl-Schokomousse","Ekelpampe"}"""
     
 
-    assert any(r.name for r in service.filter_rezepte_nach_gericht("Curr"))
+    assert any(r.name for r in service.filter_rezepte_nach_gericht(repo,"Curr"))
 
     #falsch
 
-    result4 = service.filter_rezepte_nach_gericht("myv2")  
-    result5 = service.filter_rezepte_nach_gericht("ölgi")   
-    result6 = service.filter_rezepte_nach_gericht("3425") 
+    result4 = service.filter_rezepte_nach_gericht(repo,"myv2")  
+    result5 = service.filter_rezepte_nach_gericht(repo,"ölgi")   
+    result6 = service.filter_rezepte_nach_gericht(repo,"3425") 
 
     assert not any(r.name for r in result5) 
     assert not any(r.name for r in result6)
@@ -159,59 +160,59 @@ def test_filter_rezepte_nach_gericht():
 
     """Selbst optimierte Version nach rumprobieren"""
 
-def test_filter_rezepte_nach_gericht_optimal():
+def test_filter_rezepte_nach_gericht_optimal(repo):
 
-    storage.Gerichte.append(model.Rezept("Kokoscurry-Sushibowl-Schokomousse",[],"x","x","x"))
+    repo.add(model.Rezept("Kokoscurry-Sushibowl-Schokomousse",[],"x","x","x"))
 
     #wahr
 
-    assert any(r.name for r in service.filter_rezepte_nach_gericht("Curr"))
-    assert any(r.name for r in service.filter_rezepte_nach_gericht("sUsH"))
-    assert any(r.name for r in service.filter_rezepte_nach_gericht(" schok"))
+    assert any(r.name for r in service.filter_rezepte_nach_gericht(repo,"Curr"))
+    assert any(r.name for r in service.filter_rezepte_nach_gericht(repo,"sUsH"))
+    assert any(r.name for r in service.filter_rezepte_nach_gericht(repo," schok"))
 
     #falsch
 
-    assert not any(r.name for r in service.filter_rezepte_nach_gericht("g932d"))
-    assert not any(r.name for r in service.filter_rezepte_nach_gericht("schnokomabe"))
-    assert not any(r.name for r in service.filter_rezepte_nach_gericht("miep-2xx.r9"))
+    assert not any(r.name for r in service.filter_rezepte_nach_gericht(repo,"g932d"))
+    assert not any(r.name for r in service.filter_rezepte_nach_gericht(repo,"schnokomabe"))
+    assert not any(r.name for r in service.filter_rezepte_nach_gericht(repo,"miep-2xx.r9"))
 
     
 
 """Optimierung von GPT"""
 
-def test_filter_rezepte_nach_gericht_noch_krasser_optimiert():
+def test_filter_rezepte_nach_gericht_noch_krasser_optimiert(repo):
 
-    
-    storage.Gerichte.append(model.Rezept("Kokoscurry-Sushibowl-Schokomousse", [], "x", "x", "x"))
-    storage.Gerichte.append(model.Rezept("Ekelpampe",[],"x","x","x"))
+
+    repo.add(model.Rezept("Kokoscurry-Sushibowl-Schokomousse", [], "x", "x", "x"))
+    repo.add(model.Rezept("Ekelpampe",[],"x","x","x"))
                             
-    def names(q):
-        return [r.name for r in service.filter_rezepte_nach_gericht(q)]
+    def names(repo,q):
+        return [r.name for r in service.filter_rezepte_nach_gericht(repo,q)]
 
     # wahr (Teilstrings + case + whitespace)
-    assert "Kokoscurry-Sushibowl-Schokomousse" in names("Curr")
-    assert "Kokoscurry-Sushibowl-Schokomousse" in names("sUsH ")
-    assert "Kokoscurry-Sushibowl-Schokomousse" in names(" schok")
+    assert "Kokoscurry-Sushibowl-Schokomousse" in names(repo,"Curr")
+    assert "Kokoscurry-Sushibowl-Schokomousse" in names(repo,"sUsH ")
+    assert "Kokoscurry-Sushibowl-Schokomousse" in names(repo," schok")
 
-    assert set(names("e")) == {"Kokoscurry-Sushibowl-Schokomousse","Ekelpampe"}
+    assert set(names(repo,"e")) == {"Kokoscurry-Sushibowl-Schokomousse","Ekelpampe"}
 
     # falsch
-    assert names("g932d") == []
-    assert names("schnokomabe") == []
-    assert names("miep-2xx.r9") == []
+    assert names(repo,"g932d") == []
+    assert names(repo,"schnokomabe") == []
+    assert names(repo,"miep-2xx.r9") == []
 """xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"""
 
-def test_alle_rezepte():
+def test_alle_rezepte(repo):
 
-    storage.Gerichte.append(model.Rezept("1",[],"x","x","x"))
-    storage.Gerichte.append(model.Rezept("2",[],"x","x","x"))
-    storage.Gerichte.append(model.Rezept("3",[],"x","x","x"))
-    storage.Gerichte.append(model.Rezept("4",[],"x","x","x"))
-    storage.Gerichte.append(model.Rezept("5",[],"x","x","x"))
-    storage.Gerichte.append(model.Rezept("6",[],"x","x","x"))
+    repo.add(model.Rezept("1",[],"x","x","x"))
+    repo.add(model.Rezept("2",[],"x","x","x"))
+    repo.add(model.Rezept("3",[],"x","x","x"))
+    repo.add(model.Rezept("4",[],"x","x","x"))
+    repo.add(model.Rezept("5",[],"x","x","x"))
+    repo.add(model.Rezept("6",[],"x","x","x"))
 
     def names():
-        return len([r.name for r in storage.Gerichte])
+        return len([r.name for r in repo.alle()])
     
     assert names() == 6
 
@@ -219,49 +220,51 @@ def test_alle_rezepte():
 
 """Optimale Form von Chat GPT """
 
-def test_alle_rezepte_optimal():
+def test_alle_rezepte_optimal(repo):
 
-    storage.Gerichte.append(model.Rezept("1",[],"x","x","x"))
-    storage.Gerichte.append(model.Rezept("2",[],"x","x","x"))
-    storage.Gerichte.append(model.Rezept("3",[],"x","x","x"))
-    storage.Gerichte.append(model.Rezept("4",[],"x","x","x"))
-    storage.Gerichte.append(model.Rezept("5",[],"x","x","x"))
-    storage.Gerichte.append(model.Rezept("6",[],"x","x","x"))
+    repo.add(model.Rezept("1",[],"x","x","x"))
+    repo.add(model.Rezept("2",[],"x","x","x"))
+    repo.add(model.Rezept("3",[],"x","x","x"))
+    repo.add(model.Rezept("4",[],"x","x","x"))
+    repo.add(model.Rezept("5",[],"x","x","x"))
+    repo.add(model.Rezept("6",[],"x","x","x"))
 
-    assert len(storage.Gerichte) == 6
+    assert len(repo.alle()) == 6
 
     
 
 """xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"""
 
-def test_rezept_loeschen():
-    storage.Gerichte.append(model.Rezept("Handfeuerwaffeln",[],"x","x","x"))
+def test_rezept_loeschen(repo):
+    repo.add(model.Rezept("Handfeuerwaffeln",[],"x","x","x"))
 
-    rezept = service.rezept_finden("Handfeuerwaffeln")
-    service.rezept_loeschen(rezept) 
-    assert len(storage.Gerichte) == 0
+    rezept = service.rezept_finden(repo,"Handfeuerwaffeln")
+    assert rezept is not None
+    service.rezept_loeschen(repo,rezept) 
+    assert len(repo.alle()) == 0
 
     
 """xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"""
 
-def test_rezept_einfuegen():
+def test_rezept_einfuegen(repo):
 
-    service.rezepterstellung("Handfeuerwaffeln",["Waffeln 4 Stück","Schießpulver 200 g","Schnittlauch Bündel"],"x","x","x")
-    assert len(storage.Gerichte) == 1
+    service.rezepterstellung(repo,"Handfeuerwaffeln",["Waffeln 4 Stück","Schießpulver 200 g","Schnittlauch Bündel"],"x","x","x")
+    assert len(repo.alle()) == 1
 
-    rezept = storage.Gerichte[0]
+    rezept = repo.alle()[0]
 
     schnittlauch = next(z for z in rezept.zutaten if z.name == "Schnittlauch")
     schießpulver = next(z for z in rezept.zutaten if z.name == "Schießpulver")
     waffeln = next(z for z in rezept.zutaten if z.name == "Waffeln")
 
     assert schnittlauch.menge is None
+    assert schnittlauch.einheit == "Bündel"
     assert waffeln.einheit == "Stück"
     assert schießpulver.menge == "200"
 
     assert waffeln.menge != "5"
     assert schießpulver.name != "piesschulver"
-    assert schnittlauch.menge != "Dingens"
+    assert schnittlauch.menge != "12"
 
     
 

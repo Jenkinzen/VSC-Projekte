@@ -1,4 +1,14 @@
 import rezeptliste_services as service
+
+from pathlib import Path
+import rezeptliste_services as service
+from rezeptliste_repository import JsonRezeptRepository
+
+DATEI = Path(__file__).resolve().parent / "rezepte.json"
+
+repo = JsonRezeptRepository(DATEI)
+repo.load()
+
 neustart = True
 
 def eingabezahl_pruefen(prompt,min_value=None,max_value=None):
@@ -55,7 +65,7 @@ def rezepte_ansehen_nach_gang():
         
         
 
-        rezepte = service.filter_rezepte_nach_gang(gangeingabe)
+        rezepte = service.filter_rezepte_nach_gang(repo,gangeingabe)
         print()
         for i, rezept in enumerate(rezepte, start=1):
             print(f"{i}. {rezept.name}")
@@ -92,7 +102,7 @@ def rezepte_ansehen_nach_zutaten():
         if zutat == ["0"]:
             return
         
-        rezepte = service.filter_rezepte_nach_zutaten(zutat)
+        rezepte = service.filter_rezepte_nach_zutaten(repo,zutat)
 
         
 
@@ -126,9 +136,9 @@ def rezepte_ansehen_nach_zutaten():
 def rezepte_ansehen_nach_Gericht():
     while True:
         print()
-        for i, rezept in enumerate(service.alle_rezepte(), start=1):
+        for i, rezept in enumerate(service.alle_rezepte(repo), start=1):
             print(f"{i}. {rezept.name}")
-        gerichte = service.filter_rezepte_nach_gericht("")
+        gerichte = service.filter_rezepte_nach_gericht(repo,"")
         nummer = eingabezahl_pruefen("\nWählen sie bitte die Nummer des Gerichtes,\n"
         "geben sie 0 ein um zurück zur Kriterienauswahl zu gelangen:\n",min_value=0,max_value=len(gerichte))
 
@@ -173,8 +183,9 @@ def rezepte_ansehen():
             print("Ungültige Auswahl.")
 
 def rezept_einfuegen():
-    rezeptname = input("Wie heißt das Rezept?" \
-    "0-[Zurück]:\n").strip()
+    rezeptname = input("Wie heißt das Rezept?\n\n" \
+    "0-[Zurück]\n\n"
+    "Eingabe:").strip()
 
     if rezeptname == "0":
         return
@@ -191,17 +202,17 @@ def rezept_einfuegen():
         else:
             print("Ungültige Auswahl! Bitte erneut eingeben.") 
 
-    rezept = service.rezepterstellung(rezeptname, zutaten_strings, zubereitung,gangeingabe,notizen)
+    rezept = service.rezepterstellung(repo,rezeptname, zutaten_strings, zubereitung,gangeingabe,notizen)
     print(f"{rezept.name} wurde eingefügt!")
     return
 
 def rezept_loeschen():
-        for i, rezept in enumerate(service.alle_rezepte(), start=1):
+        for i, rezept in enumerate(service.alle_rezepte(repo), start=1):
             print(f"{i}. {rezept.name}")
         
         while True:
             
-            gerichte = service.alle_rezepte()
+            gerichte = service.alle_rezepte(repo)
             nummer = eingabezahl_pruefen("Welche Nummer soll gelöscht werden?\n"
             "0-[Zurück]:\n",min_value=0,max_value=len(gerichte))                # len(alle_rezepte())würde auch gehen aber so ist es effizienter und logischer wenn
                                                                                 # schon durch gerichte einmal die funktion aufgerufen wurde.
@@ -220,7 +231,7 @@ def rezept_loeschen():
             rueckversichern = input(f"Sind sie sicher, dass {rezept_zum_loeschen.name} gelöscht werden soll? Ja/Nein").strip().lower()
 
             if rueckversichern.strip().lower() == "ja":
-                    service.rezept_loeschen(rezept_zum_loeschen)
+                    service.rezept_loeschen(repo,rezept_zum_loeschen)
                     print(f"{rezept_zum_loeschen} wurde gelöscht!")
                     return
             
@@ -231,18 +242,20 @@ def rezept_loeschen():
 
 
 
-service.rezept_laden()
+"service.rezept_laden(repo)"
 # Vor dem Programm ausführen um die aktuellste Rezeptliste aus JSON geladen zu haben.
+# Mittlerweile überflüssig weil die funktion durch die Einrichtung vom Repository in dessen Funktion
+# load.repo() bereits integriert ist. (steht oben irgendwo)
 
 
 
 while neustart:
 
-    Menueauswahl = input("""Möchten sie ein Rezept \n
-1-[ansehen]
-2-[einfügen]
-3-[löschen]\n
-Eingabe:""")
+    Menueauswahl = input("Möchten sie ein Rezept \n\n"
+    "1-[ansehen]\n"
+    "2-[einfügen]\n"
+    "3-[löschen]\n\n"
+    "Eingabe:")
 
 
 
