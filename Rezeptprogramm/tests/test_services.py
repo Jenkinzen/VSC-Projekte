@@ -35,9 +35,6 @@ def test_rezept_nach_index_gueltig(repo):
     assert result is not None
     assert result.name == "A"
 
-
-    
-
 def test_rezept_finden_case_insensitive(repo):
     repo.add(model.Rezept("Spaghetti", [], "z", "Hauptspeise", ""))
 
@@ -72,6 +69,26 @@ def test_filter_rezepte_nach_zutaten_all_must_match(repo):
     result = service.filter_rezepte_nach_zutaten(repo,["salz", "tomate"])
     assert [r.name for r in result] == ["Pasta"]
 
+def test_repo_roundtrip(tmp_path):
+    datei = tmp_path / "rezepte.json"
+    repo1 = JsonRezeptRepository(datei)
+
+    repo1.add(model.Rezept(
+        "Toast",
+        [model.Zutaten("brot", "2", "scheiben")],
+        "toasten",
+        "Hauptspeise",
+        ""
+    ))
+    repo1.save()
+
+    repo2 = JsonRezeptRepository(datei)
+    repo2.load()
+
+    toast = repo2.find_by_name("Toast")
+
+    assert toast is not None
+    assert toast.zutaten[0].name == "brot"
 
 ########################### EIGENE TESTS #############################################################################################################################
 
@@ -91,19 +108,17 @@ def test_gang_pruefen():
     assert test5 is False   #Falsch weil .strip() nur die leerzeichen vor dem ersten und nach dem letzten Buchstaben weg macht. also is dann quasi immernoch "d e s s e r t"
     assert test6 is False   #merkste selber,wa?
 
-    """optimiert Version von GPT"""
+    """optimiert + parametrize funktion von pytest"""
 
-def test_gang_pruefen_optimiert():
-
-    #wahr
-    assert service.gang_pruefen("Dessert") is True
-    assert service.gang_pruefen("dessert") is True
-    assert service.gang_pruefen(" dessert ") is True
-
-    #falsch
-    assert service.gang_pruefen("dessssert") is False
-    assert service.gang_pruefen("d e s s e r t ") is False
-    assert service.gang_pruefen("Eima swei halbe hahn") is False
+# "text, expected" gibt quasi die beiden parameter vor die danach im Tupel kommen ( also text ="Dessert", expected = True) 
+# warum auch immer man das hier als String anlegt  
+@pytest.mark.parametrize(["text", "expected"], [
+("Dessert", True),
+(" dessert ", True),
+("dessssert", False),
+])
+def test_gang_pruefen_parametrize(text, expected):
+    assert service.gang_pruefen(text) is expected
 
 """xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"""
 
@@ -174,12 +189,8 @@ def test_filter_rezepte_nach_gericht_optimal(repo):
 
     assert not any(r.name for r in service.filter_rezepte_nach_gericht(repo,"g932d"))
     assert not any(r.name for r in service.filter_rezepte_nach_gericht(repo,"schnokomabe"))
-    assert not any(r.name for r in service.filter_rezepte_nach_gericht(repo,"miep-2xx.r9"))
-
-    
-
+    assert not any(r.name for r in service.filter_rezepte_nach_gericht(repo,"miep-2xx.r9"))   
 """Optimierung von GPT"""
-
 def test_filter_rezepte_nach_gericht_noch_krasser_optimiert(repo):
 
 
@@ -201,7 +212,6 @@ def test_filter_rezepte_nach_gericht_noch_krasser_optimiert(repo):
     assert names(repo,"schnokomabe") == []
     assert names(repo,"miep-2xx.r9") == []
 """xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"""
-
 def test_alle_rezepte(repo):
 
     repo.add(model.Rezept("1",[],"x","x","x"))
@@ -215,11 +225,8 @@ def test_alle_rezepte(repo):
         return len([r.name for r in repo.alle()])
     
     assert names() == 6
-
 # wichtig!! nur mit names klappt es nicht, die () is wichtig und heißt "führe diese funktion jetzt aus"
-
 """Optimale Form von Chat GPT """
-
 def test_alle_rezepte_optimal(repo):
 
     repo.add(model.Rezept("1",[],"x","x","x"))
@@ -230,22 +237,15 @@ def test_alle_rezepte_optimal(repo):
     repo.add(model.Rezept("6",[],"x","x","x"))
 
     assert len(repo.alle()) == 6
-
-    
-
 """xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"""
-
 def test_rezept_loeschen(repo):
     repo.add(model.Rezept("Handfeuerwaffeln",[],"x","x","x"))
 
     rezept = service.rezept_finden(repo,"Handfeuerwaffeln")
     assert rezept is not None
     service.rezept_loeschen(repo,rezept) 
-    assert len(repo.alle()) == 0
-
-    
+    assert len(repo.alle()) == 0  
 """xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"""
-
 def test_rezept_einfuegen(repo):
 
     service.rezepterstellung(repo,"Handfeuerwaffeln",["Waffeln 4 Stück","Schießpulver 200 g","Schnittlauch Bündel"],"x","x","x")
@@ -264,9 +264,6 @@ def test_rezept_einfuegen(repo):
 
     assert waffeln.menge != "5"
     assert schießpulver.name != "piesschulver"
-    assert schnittlauch.menge != "12"
-
-    
-
+    assert schnittlauch.menge != "12" 
 """xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"""
 
